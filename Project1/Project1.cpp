@@ -5,10 +5,6 @@
 #include <string>
 #include <sstream>
 using namespace std;
-//The idea behind this flag was to indicate that there had been maniuplation of i in the while loop
-// that checks for more digits. However, with the usage if i+1, it is no longer necessary.
-//bool leFlag = false;
-
 // Precedence of operators. Have to be careful with comparisons.
 int precedence(char op) {
 	if (op == 'o') // o stands for logical or
@@ -29,15 +25,27 @@ int precedence(char op) {
 		return 8;
 	return 0;
 }
-/*Solves operations based on what is passed. Side note, 'l' and 'g' stand for less than or equal,
-	and greater than or equal respectively.
+/*Solves operations based on what is passed.
+	Because the stack created takes only char, specific letters
+	had to be developed for the stack to interpret. Here is the key:
+	g : greater than or equal
+	l : less than or equal
+	o : logical or
+	a : logical and
+	d : decrement
+	c : increment
+	n : logical not
+	Not shown:
+	t : negative
+	All others should be self explanatory.
+	Need to create default error code 
 */
 int useOperator(int a, int b, char op) {
 	switch (op) {
 	case '+':
 		return a + b;
 	case '-':
-		return a - b;
+		return a + -b;
 	case '*':
 		return a * b;
 	case '/':
@@ -69,16 +77,16 @@ int useOperator(int a, int b, char op) {
 	case '!':
 		return (!b);
 	}
-	return 0;
+	return 0; // Need to make default error return
 }
-// Function that returns value of expression after evaluation.
+// Function that returns value of expression after evaluation. Please read thorouhgly
 int evaluate(string index) {
 	int i;
 
 	// Stack for numerical values
 	stack <int> values;
 
-	// Stack for operands
+	// Stack for operands. Although on second thought, strings may have been better. Or even int, to take the pure values.
 	stack <char> ops;
 
 	// Begin parsing the string. This goes on until we reach string legnth.
@@ -98,7 +106,7 @@ int evaluate(string index) {
 		*/
 		else if (isdigit(index[i])) {
 			/*We create a generic variable and give it a value, The " -'0' " portion converts it from
-			an ASCII character to an int. Then, we assign the current item to val.*/
+			an ASCII character to an int by offestting its value. Then, we assign the current item to val.*/
 			int val = 0;
 			val = index[i] - '0';
 
@@ -124,6 +132,10 @@ int evaluate(string index) {
 
 			}
 
+			/*
+				The second check looks for a negative operator in the stack. If there is one on top, it's assumed
+				that the number is turned negative, and then is popped.
+			*/
 			if (!ops.empty() && ops.top() == 't')
 			{
 				val = val * -1;
@@ -139,7 +151,7 @@ int evaluate(string index) {
 		{
 			/*Checks if ops stack is not empty, and that the 'top' value is not an invalid openining parenthesis.
 				It then pops two values from value stack, pops an op from the op stack, and then passes it to the useOperator
-				function to solve. Pay attention to precedence
+				function to solve. Pay attention to precedence.
 			*/
 			while (!ops.empty() && ops.top() != '(')
 			{
@@ -166,17 +178,21 @@ int evaluate(string index) {
 			/*This loop begins by comparing precedence (refer to precendence function) of the top operator in
 				the stack and the currently processing operator. It also does a check that there are two or more values in
 				the value stack, so that we don't get an memory access violation (can't pop an empty stack.)
-				It also acts as a first level deterrent against leading operands. Then we make two temp variables,
-				assign them with respectively popped values from value stack, and then pass to useOperator function
-				to get a result. That result is then pushed to the value stack.
+				It also acts as a first level deterrent against leading operands, prior to error checking. 
+				Then we make two temp variables, assign them with respectively popped values from value stack, 
+				and then pass to useOperator function to get a result. That result is then pushed to the value stack.
 			*/
 			while (!ops.empty() && precedence(ops.top()) >= precedence(index[i]) && (values.size() >=2)) {
+				// default values assigned for decrement and increment operators to work with single values
 				int val2 = 0;
 				val2 = values.top();
 				values.pop();
+
+				// default values assigned for decrement and increment operators to work with single values
 				int val1 = 0;
 
-				if (ops.top() != 'i' || ops.top() != 'd' || ops.top() == '!')
+				// A special check is done here so that solo operators are not considered when using a second value.
+				if (ops.top() != 'c' || ops.top() != 'd' || ops.top() == '!')
 				{
 					val1 = values.top();
 					values.pop();
@@ -192,89 +208,137 @@ int evaluate(string index) {
 				extremely difficult. This 'if' statement here, then, takes care of that.
 				It first identifies if it is a comparison operator. Then, it checks if the next
 				item in the string is an '='. If it is, then we have a full comparison happening.
-				Here is the breakdown:
-					>= pushes the char 'g' which stands for greater, letting us know that it means
-						a greater or equal is being processed.
-					<= pushes the char 'l', which stands for lesser, which works on the same 
-						principle as above.
-					== pushes the operator '=' to simplify things.
-				One optimization might be to i++ to skip pushing the comparison operator.
+				This is extended to nearly all operators. Breakdown is provided in each appropriate section
+
+				One optimization might be to i++ to skip pushing the comparison operator. Another optimization would be to use
+				switch cases. Huge efficiency gains by checking endless if's, but lazy. Once we used one if, it cascaded down.
 			*/
+
+			//If a + is encountered..
 			if (index[i] == '+')
 			{
+				// Checks the next item to see if it's a -, and that the next item is either a digit or parenthesis...
 				if (index[i+1] == '-' && (isdigit(index[i + 2]) || index[i + 2] == '('))
 				{
-
+					// if so, pushes a regular + and a negative, since it assumes something is turning negative. Increases i
+					// by 1 to skip the duplicate operand
 					ops.push('+');
 					ops.push('t');
 					i++;
 				}
+				// else, if the next item is a +...
 				else if(index[i + 1] == '+')
 				{
+					// we assume it's an increment, push and increase.
 					ops.push('c');
 					i++;
 				}
+				// if nothing else...
 				else
 				{
+					// we assume it's a regular addition, and push that.
 					ops.push('+');
 				}
 				continue;
 			}
 
+			// if the item is an !...
 			else if (index[i] == '!')
 			{
+				// if the next item is =...
 				if (index[i + 1] == '=')
 				{
+					// we assume it's a comparison, push the != letter equivalent. Increase i for the loop.
 					ops.push('n');
 					i++;
 				}
+				// if nothing...
 				else
 				{
+					// we push a regular logical NOT.
 					ops.push('!');
 				}
 			}
 
+			// if the item is a & and the next one is too...
 			else if (index[i] == '&' && index[i + 1] == '&')
 			{
+				// we push the letter equivalent for logical AND. and increase i for the loop.
 				ops.push('a');
 				i++;
 			}
 
+			// if the item is an | and the next item is one too...
 			else if (index[i] == '|' && index[i] == '|')
 			{
+				// we push the letter equivalent for logical OR, and increase i for the loop.
 				ops.push('o');
 				i++;
 			}
+
+			// if the item is an - and the next item the same...
 			else if (index[i] == '-' && index[i + 1] == '-')
 			{
-				if ((isdigit(index[i + 2]) || index[i+2] == '(') && values.size() >= 2)
+				// if the item after next is a digit or parenthesis, and the size of the value stack is 2 or more...
+				if ((isdigit(index[i + 2]) || index[i+2] == '(') && values.size() >= 1)
 				{
-
+					// we assume that there is subtraction and a negative value, so we push - and letter equivalent for NEGATIVE, and increment
 					ops.push('-');
 					ops.push('t');
+					// keep an eye on this for troubleshooting
+					i++;
 				}
+				// else, if we check again, and the values stack is empty...
+				else if(index[i+1] == '-' && values.empty())
+				{
+					// we assume that it's decrement, and push the letter equivalent for DECREMENT. This is assuming it's a single entry. Increment
+					ops.push('d');
+					// keep an eye on this for troubleshooting
+					i++;
+				}
+				// else, if there's nothing that meets the criteria...
 				else
 				{
-					ops.push('d');
+					// we push a regular -.
+					ops.push('-');
 				}
-
-				i++;
+				// Keep this here for troubleshooting, because it was working fine before...
+				//i++;
 			}
+
+			/*Get a load of this...
+				So the issue we had to deal with was negatives. Particularly, them standing by themselves like -1, at 
+				the start of an expression like x+(-5+2), or just in parenthesis by themselves like (-1), while not
+				clashing against a regular minus, because so many conditionals have to be taken into account. So this
+				conditional looks at the following:
+				If it encounters a -, AND if ((Ops is empty AND i == 0 aka start of the expression) OR 
+											 (ops stack is not empty AND the top of it is an opeing 
+											 parenthesis aka start of an expression)
+				THEN AND ONLY THEN, will a negative operator be pushed to the stack.
+				This is all thanks to: https://stackoverflow.com/questions/46861254/infix-to-postfix-for-negative-numbers
+			*/
+			else if (index[i] == '-' && ((ops.empty() && i == 0) || ( !ops.empty() && ops.top() == '(')))
+			{
+
+				ops.push('t');
+			}
+			// if we encounter a comparison operator and the next item is an =...
 			else if ((index[i] == '>' || index[i] == '<' || index[i] == '=') && index[i + 1] == '=')
 			{
-				if (index[i] == '>' )
+				if (index[i] == '>' ) // if >, push g for greater than or equal
 					ops.push('g');
-				if (index[i] == '<')
+				if (index[i] == '<') // if <, push l for less than or equal
 					ops.push('l');
-				if (index[i] == '=')
+				if (index[i] == '=') // if =, push = for simple equality check
 					ops.push('=');
-				i++;
+				i++; // increment
 			}
 
-			/*MUST CHECK if size of value is at least 1 so we dont get the leading operand thing. This is a second
-				level redundancy just for sanity.
+			/*Lastly, failing all of that criteria, push the operand normally.
+				MUST CHECK if size of value is at least 1 so we dont get the 
+				leading operand thing. This is a second	level redundancy just for sanity.
 			*/
-			else if(values.size() >= 1)
+			else if(values.size() >= 0)
 			{
 				ops.push(index[i]);
 			}
@@ -285,25 +349,38 @@ int evaluate(string index) {
 		we have at least two values to use so that there isn't an error.*/
 	while (!ops.empty() ) {
 		int val2 = 0;
+		// Special check for single unit operands again. val2 is the default value to manipulate
 		if (ops.top() != 'c' && ops.top() != 'd' && ops.top() != '!' && ops.top() != 'o')
 		{
+			// Checks for the NEGATIVE operand
 			if (ops.top() == 't')
 			{
 				val2 = values.top() * -1;
 				values.pop();
 				ops.pop();
 			}
+			// if not, regular assign and pop
 			else
 			{
 				val2 = values.top();
 				values.pop();
 			}
 		}
+		// if not a single operator, push and pop
+		else
+		{
+			val2 = values.top();
+			values.pop();
+		}
 
 
 		int val1 = 0;
-		val1 = values.top();
-		values.pop();
+		// same check
+		if (ops.top() != 'c' && ops.top() != 'd' && ops.top() != '!')
+		{
+			val1 = values.top();
+			values.pop();
+		}
 
 
 		char op = ops.top();
