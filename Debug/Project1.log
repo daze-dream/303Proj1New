@@ -1,0 +1,4 @@
+﻿  Project1.cpp
+c:\users\miste\documents\school files\fall 2019\csis 303 data structures\homework files\project1\project1.cpp(46): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
+c:\users\miste\documents\school files\fall 2019\csis 303 data structures\homework files\project1\project1.cpp(85): warning C4018: '<': signed/unsigned mismatch
+  Project1.vcxproj -> C:\Users\miste\Documents\School Files\Fall 2019\CSIS 303 Data Structures\Homework Files\Debug\Project1.exe
