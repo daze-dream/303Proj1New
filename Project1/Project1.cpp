@@ -285,17 +285,26 @@ int evaluate(string index) {
 		we have at least two values to use so that there isn't an error.*/
 	while (!ops.empty() ) {
 		int val2 = 0;
-		val2 = values.top();
-		values.pop();
+		if (ops.top() != 'c' && ops.top() != 'd' && ops.top() != '!' && ops.top() != 'o')
+		{
+			if (ops.top() == 't')
+			{
+				val2 = values.top() * -1;
+				values.pop();
+				ops.pop();
+			}
+			else
+			{
+				val2 = values.top();
+				values.pop();
+			}
+		}
+
 
 		int val1 = 0;
-		if (ops.top() != 'c' && ops.top() != 'd' && ops.top() != '!' && ops.top() != 'o' )
-		{
-			if(ops.top() == '-')
-			val1 = values.top() * - 1;
-			values.pop();
-			ops.pop();
-		}
+		val1 = values.top();
+		values.pop();
+
 
 		char op = ops.top();
 		ops.pop();
