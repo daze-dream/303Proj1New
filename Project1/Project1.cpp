@@ -291,8 +291,10 @@ int evaluate(string index) {
 		int val1 = 0;
 		if (ops.top() != 'c' && ops.top() != 'd' && ops.top() != '!' && ops.top() != 'o' )
 		{
-			val1 = values.top();
+			if(ops.top() == '-')
+			val1 = values.top() * - 1;
 			values.pop();
+			ops.pop();
 		}
 
 		char op = ops.top();
