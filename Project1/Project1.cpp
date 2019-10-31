@@ -355,7 +355,7 @@ int evaluate(string index) {
 			*/
 			else if(values.size() >= 0)
 			{
-				if (index[i] != '*' && index[i] != '/' && index[i] != '%' && index[i] != '^' && index[i] != '-' && index[i] != '+')
+				if (index[i] != '*' && index[i] != '/' && index[i] != '%' && index[i] != '^' && index[i] != '-' && index[i] != '+' && index[i] != '>' && index[i] != '<' && index[i] != '=')
 				{
 					cout << "Error: Unknown operand at position " << i << endl;
 					failFlag = true;
