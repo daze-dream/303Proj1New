@@ -5,6 +5,8 @@
 #include <string>
 #include <sstream>
 using namespace std;
+
+bool failFlag = false;
 // Precedence of operators. Have to be careful with comparisons.
 int precedence(char op) {
 	if (op == 'o') // o stands for logical or
@@ -49,7 +51,17 @@ int useOperator(int a, int b, char op) {
 	case '*':
 		return a * b;
 	case '/':
-		return a / b;
+		if (b == 0)
+		{
+			cout << "Error: Division by 0" << endl;
+			failFlag = true;
+			break;
+		}
+		else
+		{
+			return a / b;
+		}
+
 	case '^':
 		return pow(a, b);
 	case '=':
@@ -76,6 +88,9 @@ int useOperator(int a, int b, char op) {
 		return (a%b);
 	case '!':
 		return (!b);
+	default:
+		cout << "Error: Unknown operand entered." << endl;
+		break;
 	}
 	return 0; // Need to make default error return
 }
@@ -309,11 +324,11 @@ int evaluate(string index) {
 			/*Get a load of this...
 				So the issue we had to deal with was negatives. Particularly, them standing by themselves like -1, at 
 				the start of an expression like x+(-5+2), or just in parenthesis by themselves like (-1), while not
-				clashing against a regular minus, because so many conditionals have to be taken into account. So this
+				clashing against a regular minus, because so many conditions have to be taken into account. So this
 				conditional looks at the following:
 				If it encounters a -, AND if ((Ops is empty AND i == 0 aka start of the expression) OR 
 											 (ops stack is not empty AND the top of it is an opeing 
-											 parenthesis aka start of an expression)
+											 parenthesis aka start of an expression))
 				THEN AND ONLY THEN, will a negative operator be pushed to the stack.
 				This is all thanks to: https://stackoverflow.com/questions/46861254/infix-to-postfix-for-negative-numbers
 			*/
@@ -340,7 +355,16 @@ int evaluate(string index) {
 			*/
 			else if(values.size() >= 0)
 			{
-				ops.push(index[i]);
+				if (index[i] != '*' && index[i] != '/' && index[i] != '%' && index[i] != '^' && index[i] != '-' && index[i] != '+')
+				{
+					cout << "Error: Unknown operand at position " << i << endl;
+					failFlag = true;
+					break;
+				}
+				else
+				{
+					ops.push(index[i]);
+				}
 			}
 		}
 	}
@@ -396,16 +420,40 @@ int evaluate(string index) {
 int main() {
 	string expression;
 	char loop = ' ';
+	int result;
 	while (loop != 'N')
 	{
 		cout << "Enter infix expression to evaluate: " << endl;
 		getline(cin, expression);
-		cout << "The answer is " << evaluate(expression) << endl;
+		//cout << "The answer is " << evaluate(expression) << endl;
+		//  do initial check. if there's  leading closing parenthesis or operand, cout << error message and break.
+		//if (expression[0] == ')' || ((!isdigit(expression[0]) && (expression[1] != '+' || (expression[1] != '-' || isdigit(expression[1]))))))
+		//if(expression[0] == ')' &&   ( !isdigit(expression[0]) && (expression[1] != '+' &&  expression[1] != '-')                        ) )
+		//{
+		//	cout << "Error. Can't have leading closing parenthesis ')', or non urnary operand..." << endl;
+		//}
+		if (expression[0] == ')')
+		{
+			cout << "Error. Can't have leading closing parenthesis ')' (at char 0)" << endl;
+		}
+		else if (!isdigit(expression[0]) && expression[0] == '+' && expression[1] != '+')
+		{
+			cout << "Error: can't lead with binary operator (at char 0)" << endl;
+		}
+		else 
+		{
+			result = evaluate(expression);
+			if (!failFlag)
+			{
+				cout << "The answer is " << result << endl;
+			}
+		}
 		cout << "Continue? Input N to exit, or any other key to continue: ";
 		cin >> loop;
 		loop = toupper(loop);
 		cin.clear();
 		cin.ignore(numeric_limits<streamsize>::max(), '\n');
+		failFlag = false;
 		cout << endl;
 	}
 	system("pause");
